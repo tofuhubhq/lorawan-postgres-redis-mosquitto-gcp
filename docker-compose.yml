@@ -1,0 +1,7 @@
+version: '3.9'
+
+services:
+  lorawan-stack:
+    build: .
+    container_name: lorawan-stack
+    restart: unless-stopped
