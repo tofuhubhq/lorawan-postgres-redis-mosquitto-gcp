@@ -33,45 +33,72 @@ variable "postgres_password" { type = string }
 variable "redis_host" { type = string }
 variable "redis_password" { type = string }
 
+variable "gcp_region" {
+  description = "GCP region"
+  type        = string
+}
+
+resource "local_file" "chirpstack_env" {
+  filename = "${path.module}/tmp/chirpstack.env"
+  content  = <<EOT
+  MQTT_BROKER_HOST=${var.mosquitto_username}:${var.mosquitto_password}@${var.mosquitto_host}
+  POSTGRESQL_HOST=postgres://${var.postgres_user}:${var.postgres_password}@${var.postgres_host}:${var.postgres_port}/${var.postgres_db_name}?sslmode=require
+  REDIS_HOST=default:${var.redis_password}@${var.redis_host}
+  EOT
+}
+
 provider "google" {
   project = var.gcp_project
-  zone    = var.gcp_zone
+  region  = var.gcp_region
+  credentials = file("/Users/tommaso/Downloads/tofuhub-95de5791f8fb.json")
 }
 
-resource "google_compute_instance" "chirpstack" {
-  count        = var.instance_count
-  name         = "chirpstack-${count.index}"
-  machine_type = var.machine_type
+# resource "google_compute_instance" "chirpstack" {
+#   count        = var.instance_count
+#   name         = "chirpstack-${count.index}"
+#   machine_type = var.machine_type
+#   zone         = var.gcp_zone
 
-  boot_disk {
-    initialize_params {
-      image = "ubuntu-os-cloud/ubuntu-2204-lts"
-    }
-  }
+#   boot_disk {
+#     initialize_params {
+#       image = "ubuntu-os-cloud/ubuntu-2204-lts"
+#     }
+#   }
 
-  network_interface {
-    network = var.network_self_link
-    access_config {}
-  }
+#   network_interface {
+#     network = var.network_self_link
+#     access_config {}
+#   }
 
-  metadata_startup_script = <<-EOT
-    #!/bin/bash
-    set -eux
-    apt-get update -y
-    apt-get install -y docker.io docker-compose git
-    git clone https://github.com/tofuhubhq/chirpstack-docker.git /opt/chirpstack
-    cat <<EOFENV >/opt/chirpstack/.env
-MQTT_BROKER_HOST=${var.mosquitto_username}:${var.mosquitto_password}@${var.mosquitto_host}
-POSTGRESQL_HOST=postgres://${var.postgres_user}:${var.postgres_password}@${var.postgres_host}:${var.postgres_port}/${var.postgres_db_name}?sslmode=disable
-REDIS_HOST=default:${var.redis_password}@${var.redis_host}
-EOFENV
-    cd /opt/chirpstack
-    docker-compose up --build -d
-  EOT
+#   metadata_startup_script = <<-EOT
+#     #!/bin/bash
+#     set -eux
+#     apt-get update -y
+#     apt-get install -y docker.io docker-compose git
+#     git clone https://github.com/tofuhubhq/chirpstack-docker.git /opt/chirpstack
+#     cat <<EOFENV >/opt/chirpstack/.env
+# MQTT_BROKER_HOST=${var.mosquitto_username}:${var.mosquitto_password}@${var.mosquitto_host}
+# POSTGRESQL_HOST=postgres://${var.postgres_user}:${var.postgres_password}@${var.postgres_host}:${var.postgres_port}/${var.postgres_db_name}?sslmode=disable
+# REDIS_HOST=default:${var.redis_password}@${var.redis_host}
+# EOFENV
+#     cd /opt/chirpstack
+#     docker-compose up --build -d
+#   EOT
 
-  tags = ["chirpstack"]
-}
+#   tags = ["chirpstack"]
 
-output "chirpstack_instance_ips" {
-  value = [for i in google_compute_instance.chirpstack : i.network_interface[0].access_config[0].nat_ip]
-}
+#   provisioner "remote-exec" {
+#     inline = [
+#       "mkdir -p /var/chirpstack"
+#     ]
+#   }
+#   # Copy the local file with the credentials to the remote machine
+#   provisioner "file" {
+#     source = local_file.chirpstack_env.filename
+#     destination = "/var/chirpstack/chirpstack.env"
+#   }
+# }
+
+# output "chirpstack_instance_ips" {
+#   value = [for i in google_compute_instance.chirpstack : i.network_interface[0].access_config[0].nat_ip]
+# }

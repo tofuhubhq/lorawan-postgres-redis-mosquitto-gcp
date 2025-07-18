@@ -19,62 +19,70 @@ variable "do_domain" {
   default     = ""
 }
 
+variable "gcp_project" {
+  description = "GCP project ID"
+  type        = string
+}
+
+variable "gcp_region" {
+  description = "GCP project ID"
+  type        = string
+}
+
 variable "do_ssh_firewall_name" {
   description = "Digital ocean ssh firewall name"
   type        = string
   default     = ""
 }
 
-provider "digitalocean" {
-  token = var.do_access_token
+provider "google" {
+  project     = var.gcp_project
+  region      = var.gcp_region
+  credentials = file("/Users/tommaso/Downloads/tofuhub-95de5791f8fb.json")
 }
 
 # Create the VPC. There is no need to assign it to the project,
 # because VPCs are not project scoped.
-#@tofuhub:protects->chirpstack_nodes
-#@tofuhub:protects->mosquitto
-#@tofuhub:protects->redis
-#@tofuhub:protects->postgres
 resource "digitalocean_vpc" "main" {
   name     = var.do_vpc_name
   region   = var.do_vpc_region
 }
 
 # Create the domain
-resource "digitalocean_domain" "purus_domain" {
-  name = var.do_domain
-  # ip   = "203.0.113.10"  # Optional: sets an A record for root domain
-}
+# resource "digitalocean_domain" "purus_domain" {
+#   name = var.do_domain
+#   # ip   = "203.0.113.10"  # Optional: sets an A record for root domain
+# }
 
-# Create the SSH firewall
-resource "digitalocean_firewall" "ssh" {
-  name = var.do_ssh_firewall_name
+# # Create the SSH firewall
+# resource "digitalocean_firewall" "ssh" {
+#   name = var.do_ssh_firewall_name
 
-  tags = ["ssh"]
+#   tags = ["ssh"]
 
-  inbound_rule {
-    protocol         = "tcp"
-    port_range       = "22"
-    source_addresses = ["0.0.0.0/0", "::/0"]
-  }
+#   inbound_rule {
+#     protocol         = "tcp"
+#     port_range       = "22"
+#     source_addresses = ["0.0.0.0/0", "::/0"]
+#   }
 
-  outbound_rule {
-    protocol              = "tcp"
-    port_range            = "all"
-    destination_addresses = ["0.0.0.0/0", "::/0"]
-  }
+#   outbound_rule {
+#     protocol              = "tcp"
+#     port_range            = "all"
+#     destination_addresses = ["0.0.0.0/0", "::/0"]
+#   }
 
-  outbound_rule {
-    protocol              = "udp"
-    port_range            = "all"
-    destination_addresses = ["0.0.0.0/0", "::/0"]
-  }
-}
+#   outbound_rule {
+#     protocol              = "udp"
+#     port_range            = "all"
+#     destination_addresses = ["0.0.0.0/0", "::/0"]
+#   }
+# }
 
-output "domain_name" {
-  value = digitalocean_domain.purus_domain.name
-}
+# output "domain_name" {
+#   value = digitalocean_domain.purus_domain.name
+# }
 
-output "domain_resource_id" {
-  value = digitalocean_domain.purus_domain.id
-}
+# output "domain_resource_id" {
+#   value = digitalocean_domain.purus_domain.id
+# }

@@ -1,309 +1,158 @@
 terraform {
   required_providers {
-    digitalocean = {
-      source  = "digitalocean/digitalocean"
-      version = "~> 2.0"
-    }
-
-    local = {
-      source  = "hashicorp/local"
-      version = "~> 2.0"
+    google = {
+      source  = "hashicorp/google"
+      version = "~> 4.0"
     }
   }
 }
 
-# Digital Ocean
-variable "do_domain" {
-  description = "Digital ocean domain"
-  type        = string
-  default     = ""
-}
-
-variable "do_access_token" {
-  description = "Digital ocean access token"
-  type        = string
-  default     = ""
-}
-
-variable "do_project_name" {
-  description = "Digital ocean project name"
-  type        = string
-  default     = ""
-}
-
-variable "do_project_description" {
-  description = "Digital ocean project description"
-  type        = string
-  default     = ""
-}
-
-variable "do_vpc_name" {
-  description = "Digital ocean vpc name"
-  type        = string
-}
-variable "do_vpc_region" {
-  description = "Digital ocean vpc region"
+# GCP variables
+variable "gcp_project_id" {
+  description = "GCP project ID"
   type        = string
 }
 
-variable "do_ssh_firewall_name" {
-  description = "Digital ocean ssh firewall name"
-  type        = string
-  default     = ""
-}
-
-variable "do_db_name" {
-  description = "Digital ocean db name"
+variable "gcp_region" {
+  description = "GCP region"
   type        = string
 }
 
-variable "do_db_engine" {
-  description = "Digital ocean db engine"
+variable "gcp_zone" {
+  description = "GCP zone"
   type        = string
 }
 
-variable "do_db_version" {
-  description = "Digital ocean db version"
+variable "network_name" {
   type        = string
+  description = "VPC network name"
+  default     = "lorawan-network"
 }
 
-variable "do_db_size" {
-  description = "Digital ocean db size"
+variable "firewall_name" {
   type        = string
+  default     = "ssh-firewall"
 }
 
-variable "do_db_region" {
-  description = "Digital ocean db region"
-  type        = string
+variable "redis_instance_name" {
+  type = string
+  default = "redis"
 }
 
-variable "do_db_node_count" {
-  description = "Digital ocean db node count"
-  type        = string
-}
-
-# Mosquitto vars
-
-variable "do_mosquitto_name" {
-  description = "Mosquitto broker name"
-  type        = string
-}
-
-variable "do_mosquitto_firewall_name" {
-  description = "Mosquitto firewall name"
-  type        = string
-}
-variable "do_mosquitto_region" {
-  description = "Digital ocean mosquitto region"
-  type        = string
-}
-
-variable "do_mosquitto_image" {
-  description = "Digital ocean mosquitto image"
-  type        = string
-}
-
-variable "do_mosquitto_size" {
-  description = "Digital ocean mosquitto size"
-  type        = string
-}
-
-variable "do_mosquitto_username" {
-  description = "Digital ocean mosquitto username"
-  type        = string
-}
-
-variable "do_mosquitto_password" {
-  description = "Digital ocean mosquitto password"
-  type        = string
-}
-
-# Chirpstack vars
-variable "do_chirpstack_droplet_count" {
-  description = "Digital ocean access token"
-  type        = string
-}
-
-variable "do_chirpstack_droplet_size" {
-  description = "Digital ocean access token"
-  type        = string
-}
-
-variable "do_chirpstack_droplet_image" {
-  description = "Digital ocean access token"
-  type        = string
-}
-
-variable "do_chirpstack_droplet_region" {
-  description = "Digital ocean access token"
-  type        = string
-}
-
-variable "do_chirpstack_firewall_name" {
-  description = "Chirpstack firewall name"
-  type        = string
-}
-
-# redis
-variable "redis_droplet_size" {
-  description = "Droplet size for redis"
-  type        = string
-  default     = "s-1vcpu-1gb"
-}
-
-variable "redis_droplet_name" {
-  description = "Name for redis Droplet"
-  type        = string
-  default     = ""
-}
-
-variable "redis_droplet_image" {
-  description = "Image for redis Droplet"
-  type        = string
-  default     = "ubuntu-22-04-x64"
-}
-
-variable "redis_region" {
-  description = "Region for redis Droplet"
-  type        = string
+variable "redis_machine_type" {
+  type    = string
+  default = "e2-medium"
 }
 
 variable "redis_password" {
-  description = "Password to secure redis"
-  type        = string
+  type = string
 }
 
-variable "do_loadbalancer_name" {
-  description = "Digital ocean loadbalancer name"
-  type        = string
-  default     = ""
+variable "mosquitto_instance_name" {
+  type    = string
+  default = "mosquitto"
 }
 
-variable "do_loadbalancer_region" {
-  description = "Digital ocean loadbalancer region"
-  type        = string
-  default     = ""
-}
-variable "do_lorawan_subdomain" {
-  description = "Lorawan subdomain"
-  type        = string
-  default     = ""
+variable "mosquitto_machine_type" {
+  type    = string
+  default = "e2-medium"
 }
 
-variable "do_ssh_key_ids" {
-  type = list(string)
-  default = []
+variable "mosquitto_username" { type = string }
+variable "mosquitto_password" { type = string }
+
+variable "chirpstack_machine_type" {
+  type    = string
+  default = "e2-medium"
 }
 
-variable "private_key_path" {
-  description = "Path to your SSH private key"
-  type        = string
+variable "chirpstack_count" {
+  type    = number
+  default = 2
 }
 
-# Providers
-
-provider "digitalocean" {
-  token = var.do_access_token
+variable "db_name" {
+  type    = string
+  default = "lorawan-db"
 }
 
-# Create project
-resource "digitalocean_project" "playground" {
-  name        = var.do_project_name
-  description = var.do_project_description
-  purpose     = "Web Application"
-  environment = "Development"
+variable "db_user" {
+  type    = string
+  default = "lorawan"
 }
 
+variable "db_password" { type = string }
+
+# Modules
 module "network" {
-  source = "./modules/network"
-  do_access_token = var.do_access_token
-  do_vpc_name = var.do_vpc_name
-  do_vpc_region  = var.do_vpc_region
-  do_domain = var.do_domain
-  do_ssh_firewall_name = var.do_ssh_firewall_name
+  source          = "./modules_gcp/network"
+  gcp_project        = var.gcp_project_id
+  gcp_region      = var.gcp_region
+  gcp_network_name = var.network_name
+  gcp_firewall_name = var.firewall_name
 }
 
 module "redis" {
-  source = "./modules/redis"
-  do_access_token = var.do_access_token
-  do_ssh_key_ids = var.do_ssh_key_ids
-  redis_droplet_name = var.redis_droplet_name
-  redis_droplet_size = var.redis_droplet_size
-  redis_droplet_image = var.redis_droplet_image
-  redis_region = var.redis_region
-  redis_password = var.redis_password
-  private_key_path = var.private_key_path
-  do_project_id = digitalocean_project.playground.id
+  source             = "./modules_gcp/redis"
+  gcp_project        = var.gcp_project_id
+  gcp_zone           = var.gcp_zone
+  redis_instance_name = var.redis_instance_name
+  machine_type        = var.redis_machine_type
+  redis_password      = var.redis_password
+  network_self_link   = module.network.network_self_link
 }
 
 module "postgres" {
-  source = "./modules/postgres"
-  do_access_token = var.do_access_token
-  do_project_id     = digitalocean_project.playground.id
-  do_db_name       = var.do_db_name
-  do_db_engine     = var.do_db_engine
-  do_db_version    = var.do_db_version
-  do_db_size       = var.do_db_size
-  do_db_region     = var.do_db_region
-  do_db_node_count = var.do_db_node_count
+  source      = "./modules_gcp/postgres"
+  gcp_project = var.gcp_project_id
+  gcp_region  = var.gcp_region
+  gcp_zone           = var.gcp_zone
+  db_name     = var.db_name
+  db_user     = var.db_user
+  db_password = var.db_password
 }
 
 module "mosquitto" {
-  source = "./modules/mosquitto"
-  do_access_token = var.do_access_token
-  do_ssh_key_ids = var.do_ssh_key_ids
-  do_mosquitto_name = var.do_mosquitto_name
-  do_mosquitto_image = var.do_mosquitto_image
-  do_mosquitto_size = var.do_mosquitto_size
-  do_mosquitto_region = var.do_mosquitto_region
-  private_key_path = var.private_key_path
-  do_project_id = digitalocean_project.playground.id
-  do_domain = var.do_domain
-  mosquitto_config_path = "${path.module}/modules/mosquitto/mosquitto.conf"
-  do_mosquitto_username = var.do_mosquitto_username
-  do_mosquitto_password = var.do_mosquitto_password
-  do_mosquitto_firewall_name = var.do_mosquitto_firewall_name
+  source               = "./modules_gcp/mosquitto"
+  gcp_project          = var.gcp_project_id
+  gcp_zone             = var.gcp_zone
+  mosquitto_instance_name = var.mosquitto_instance_name
+  gcp_region = var.gcp_region
+  machine_type            = var.mosquitto_machine_type
+  mosquitto_username      = var.mosquitto_username
+  mosquitto_password      = var.mosquitto_password
+  network_self_link       = module.network.network_self_link
 }
 
 module "chirpstack" {
-  source = "./modules/chirpstack"
-  do_ssh_key_ids = var.do_ssh_key_ids
-  do_access_token = var.do_access_token
-  do_chirpstack_droplet_count = var.do_chirpstack_droplet_count
-  do_chirpstack_droplet_size = var.do_chirpstack_droplet_size
-  do_chirpstack_droplet_image = var.do_chirpstack_droplet_image
-  do_chirpstack_droplet_region = var.do_chirpstack_droplet_region
-  private_key_path = var.private_key_path
-  do_project_id = digitalocean_project.playground.id
-
-  # These are the variables that are coming from the mosquitto module
+  source            = "./modules_gcp/chirpstack"
+  gcp_project       = var.gcp_project_id
+  gcp_zone          = var.gcp_zone
+  instance_count    = var.chirpstack_count
+  machine_type      = var.chirpstack_machine_type
+  network_self_link = module.network.network_self_link
   mosquitto_host     = module.mosquitto.mosquitto_host
   mosquitto_port     = module.mosquitto.mosquitto_port
-  mosquitto_username = var.do_mosquitto_username
-  mosquitto_password = var.do_mosquitto_password
-
-  postgres_host     = module.postgres.postgres_credentials.host
-  postgres_port     = module.postgres.postgres_credentials.port
-  postgres_db_name  = module.postgres.postgres_credentials.db_name
-  postgres_user     = module.postgres.postgres_credentials.user
-  postgres_password = module.postgres.postgres_credentials.password
-
-  redis_host = module.redis.redis_host
-  redis_password = module.redis.redis_password
-  
-  ca_certificate = module.postgres.ca_certificate
-  do_chirpstack_firewall_name = var.do_chirpstack_firewall_name
+  mosquitto_username = var.mosquitto_username
+  mosquitto_password = var.mosquitto_password
+  postgres_host      = module.postgres.postgres_host
+  postgres_port      = module.postgres.postgres_port
+  postgres_db_name   = module.postgres.postgres_db_name
+  postgres_user      = module.postgres.postgres_user
+  postgres_password  = module.postgres.postgres_password
+  redis_host         = module.redis.redis_host
+  gcp_region = var.gcp_region
+  redis_password     = module.redis.redis_password
 }
 
-module "loadbalancer" {
-  source = "./modules/loadbalancer"
-  do_lorawan_subdomain = var.do_lorawan_subdomain
-  do_loadbalancer_name = var.do_loadbalancer_name
-  do_project_id = digitalocean_project.playground.id
-  do_loadbalancer_region = var.do_loadbalancer_region
-  do_chirpstack_droplet_region = var.do_chirpstack_droplet_region
-  droplet_ids = module.chirpstack.chirpstack_droplet_ids
-  do_access_token = var.do_access_token
-  do_domain         = module.network.domain_name
-  domain_depends_on = module.network.domain_resource_id
-}
+# module "loadbalancer" {
+#   source        = "./modules_gcp/loadbalancer"
+#   gcp_project   = var.gcp_project
+#   gcp_region    = var.gcp_region
+#   instance_ips  = module.chirpstack.chirpstack_instance_ips
+#   lb_name       = "lorawan-lb"
+# }
+
+# output "loadbalancer_ip" {
+#   value = module.loadbalancer.lb_ip
+# }

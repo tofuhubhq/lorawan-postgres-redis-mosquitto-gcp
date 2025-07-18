@@ -21,6 +21,7 @@ variable "gcp_firewall_name" {
 provider "google" {
   project = var.gcp_project
   region  = var.gcp_region
+  credentials = file("/Users/tommaso/Downloads/tofuhub-95de5791f8fb.json")
 }
 
 resource "google_compute_network" "vpc" {

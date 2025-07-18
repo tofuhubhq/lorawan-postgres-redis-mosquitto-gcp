@@ -23,9 +23,15 @@ variable "db_password" {
   type = string
 }
 
+variable "gcp_zone" {
+  description = "GCP compute zone"
+  type        = string
+}
+
 provider "google" {
   project = var.gcp_project
-  region  = var.gcp_region
+  region  = var.gcp_zone
+  credentials = file("/Users/tommaso/Downloads/tofuhub-95de5791f8fb.json")
 }
 
 resource "google_sql_database_instance" "postgres" {
@@ -35,7 +41,17 @@ resource "google_sql_database_instance" "postgres" {
 
   settings {
     tier = var.db_tier
+
+    ip_configuration {
+      ipv4_enabled = true
+
+      authorized_networks {
+        name  = "allow-chirpstack"
+        value = "0.0.0.0/0"  # You can restrict this later
+      }
+    }
   }
+
 }
 
 resource "google_sql_user" "default" {

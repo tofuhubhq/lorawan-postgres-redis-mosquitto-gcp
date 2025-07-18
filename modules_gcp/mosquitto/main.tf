@@ -26,19 +26,25 @@ variable "mosquitto_password" {
   type        = string
 }
 
+variable "gcp_region" {
+  description = "GCP region"
+  type        = string
+}
+
 variable "network_self_link" {
   type = string
 }
 
 provider "google" {
   project = var.gcp_project
-  zone    = var.gcp_zone
+  region  = var.gcp_region
+  credentials = file("/Users/tommaso/Downloads/tofuhub-95de5791f8fb.json")
 }
 
 resource "google_compute_instance" "mosquitto" {
   name         = var.mosquitto_instance_name
   machine_type = var.machine_type
-
+  zone         = var.gcp_zone
   boot_disk {
     initialize_params {
       image = "ubuntu-os-cloud/ubuntu-2204-lts"
@@ -62,6 +68,20 @@ resource "google_compute_instance" "mosquitto" {
   EOT
 
   tags = ["mosquitto"]
+}
+
+resource "google_compute_firewall" "allow_mosquitto" {
+  name    = "allow-mosquitto"
+  network = var.network_self_link  # or use `google_compute_network.vpc.name`
+
+  allow {
+    protocol = "tcp"
+    ports    = ["1883"]
+  }
+
+  direction = "INGRESS"
+  source_ranges = ["0.0.0.0/0"]  # 👈 Optional: restrict to known clients for better security
+  target_tags   = ["mosquitto"] # 👈 matches the tag on your VM
 }
 
 output "mosquitto_host" {

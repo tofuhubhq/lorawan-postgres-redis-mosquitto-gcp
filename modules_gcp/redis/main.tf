@@ -30,13 +30,14 @@ variable "network_self_link" {
 
 provider "google" {
   project = var.gcp_project
-  zone    = var.gcp_zone
+  region  = var.gcp_zone
+  credentials = file("/Users/tommaso/Downloads/tofuhub-95de5791f8fb.json")
 }
 
 resource "google_compute_instance" "redis" {
   name         = var.redis_instance_name
   machine_type = var.machine_type
-
+  zone         = var.gcp_zone
   boot_disk {
     initialize_params {
       image = "ubuntu-os-cloud/ubuntu-2204-lts"
@@ -60,6 +61,20 @@ resource "google_compute_instance" "redis" {
   EOT
 
   tags = ["redis"]
+}
+
+resource "google_compute_firewall" "allow_redis" {
+  name    = "allow-redis"
+  network = var.network_self_link
+
+  allow {
+    protocol = "tcp"
+    ports    = ["6379"]
+  }
+
+  direction     = "INGRESS"
+  source_ranges = ["0.0.0.0/0"]  # ⚠️ or restrict to a known range
+  target_tags   = ["redis"]     # 👈 this matches the VM's `tags = ["redis"]`
 }
 
 output "redis_host" {
