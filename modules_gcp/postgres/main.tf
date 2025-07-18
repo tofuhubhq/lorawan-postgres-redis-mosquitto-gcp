@@ -54,6 +54,11 @@ resource "google_sql_database_instance" "postgres" {
 
 }
 
+resource "google_sql_ssl_cert" "client_cert" {
+  common_name = "my-client-cert"
+  instance    = google_sql_database_instance.postgres.name
+}
+
 resource "google_sql_user" "default" {
   name     = var.db_user
   instance = google_sql_database_instance.postgres.name
@@ -84,4 +89,15 @@ output "postgres_password" {
 
 output "postgres_db_name" {
   value = google_sql_database.db.name
+}
+output "client_cert" {
+  value = google_sql_ssl_cert.client_cert.cert
+}
+
+output "client_key" {
+  value = google_sql_ssl_cert.client_cert.private_key
+}
+
+output "server_ca_cert" {
+  value = google_sql_ssl_cert.client_cert.server_ca_cert
 }

@@ -71,6 +71,11 @@ variable "chirpstack_count" {
   default = 2
 }
 
+variable "private_key_path" {
+  description = "Path to your private SSH key"
+  type        = string
+}
+
 variable "db_name" {
   type    = string
   default = "lorawan-db"
@@ -138,6 +143,8 @@ module "chirpstack" {
   postgres_host      = module.postgres.postgres_host
   postgres_port      = module.postgres.postgres_port
   postgres_db_name   = module.postgres.postgres_db_name
+  private_key_path = var.private_key_path
+  ca_certificate = module.postgres.server_ca_cert
   postgres_user      = module.postgres.postgres_user
   postgres_password  = module.postgres.postgres_password
   redis_host         = module.redis.redis_host
